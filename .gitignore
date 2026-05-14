@@ -1,0 +1,33 @@
+# Environment
+.env
+.env.local
+*.env
+
+# Cache
+__pycache__/
+*.py[cod]
+*$py.class
+.cache/
+.huggingface/
+
+# Virtual Environment
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+finance_agent.log
+
+# Output
+audit_log.json
+*.json
+
+# OS
+.DS_Store
+Thumbs.db
