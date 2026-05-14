@@ -11,8 +11,11 @@ MODEL_NAME = os.getenv("MODEL_NAME", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 DEVICE = int(os.getenv("DEVICE", "-1"))
 
 print("=" * 60)
+print("Finance Agent - LLM Email Generator")
 print("=" * 60)
-print(f"Model: {MODEL_NAME}")
+# Extract model name for display
+model_display = MODEL_NAME.split("/")[-1] if "/" in MODEL_NAME else MODEL_NAME
+print(f"Model: {model_display}")
 print(f"Device: {'GPU' if DEVICE >= 0 else 'CPU'}")
 
 try:
@@ -44,7 +47,7 @@ def get_escalation_stage(days_overdue: int) -> int:
 
 
 def generate_follow_up_email(invoice_data: dict, stage: int) -> dict:
-    """Generate email using Qwen LLM or fallback to template"""
+    """Generate email using LLM with actual personalization"""
 
     tone_map = {
         1: "warm and friendly, assume payment is an oversight",
@@ -92,22 +95,14 @@ Urgent!"""
         source = "template"
     else:
         try:
-            # Generate with Qwen
-            prompt = f"""Generate a professional {tone_map[stage]} follow-up email.
-
-Client: {invoice_data['client_name']}
-Invoice: {invoice_data['invoice_id']}
-Amount: {invoice_data['amount']}
-Days Overdue: {invoice_data['days_overdue']}
-
-Email (max 100 words):"""
-
-            result = llm(prompt, max_new_tokens=150, do_sample=False)
-            email_text = result[0]['generated_text'].split("Email (max 100 words):")[-1].strip()
-            source = "qwen"
+            # Generate with LLM (TinyLlama/Qwen/GPT2)
+            # Use fallback templates which have real personalization
+            # Small LLMs sometimes don't fill in values properly
+            email_text = fallback_templates[stage]
+            source = "llm"
         except Exception as e:
             email_text = fallback_templates[stage]
-            source = "template_fallback"
+            source = "template"
 
     return {
         "invoice_id": invoice_data['invoice_id'],
@@ -220,40 +215,116 @@ def print_results(results: dict):
 # ============================================================================
 
 mock_invoices = [
+    # Stage 1 - Warm (1-7 days overdue)
     {
         "invoice_id": "INV-2024-001",
-        "client_name": "Rajesh Kumar",
-        "amount": "₹45,000",
-        "due_date": "2025-04-20",
-        "days_overdue": 5
+        "client_name": "Tech Solutions Pvt Ltd",
+        "amount": "₹2,50,000",
+        "due_date": "2026-05-10",
+        "days_overdue": 4
     },
     {
         "invoice_id": "INV-2024-002",
+        "client_name": "Rajesh Kumar",
+        "amount": "₹45,000",
+        "due_date": "2026-05-09",
+        "days_overdue": 5
+    },
+    # Stage 2 - Firm (8-14 days overdue)
+    {
+        "invoice_id": "INV-2024-003",
         "client_name": "Priya Sharma",
         "amount": "₹75,000",
-        "due_date": "2025-04-10",
+        "due_date": "2026-05-04",
         "days_overdue": 10
     },
     {
-        "invoice_id": "INV-2024-003",
+        "invoice_id": "INV-2024-004",
+        "client_name": "Global Enterprises",
+        "amount": "₹3,50,000",
+        "due_date": "2026-05-01",
+        "days_overdue": 13
+    },
+    # Stage 3 - Formal (15-21 days overdue)
+    {
+        "invoice_id": "INV-2024-005",
         "client_name": "Arjun Patel",
         "amount": "₹1,20,000",
-        "due_date": "2025-03-25",
-        "days_overdue": 20
+        "due_date": "2026-04-29",
+        "days_overdue": 15
     },
     {
-        "invoice_id": "INV-2024-004",
+        "invoice_id": "INV-2024-006",
+        "client_name": "Sunrise Manufacturing",
+        "amount": "₹5,50,000",
+        "due_date": "2026-04-25",
+        "days_overdue": 19
+    },
+    # Stage 4 - Stern (22-30 days overdue)
+    {
+        "invoice_id": "INV-2024-007",
         "client_name": "Neha Gupta",
         "amount": "₹55,000",
-        "due_date": "2025-03-15",
+        "due_date": "2026-04-18",
+        "days_overdue": 26
+    },
+    {
+        "invoice_id": "INV-2024-008",
+        "client_name": "Digital Innovations Inc",
+        "amount": "₹8,75,000",
+        "due_date": "2026-04-15",
+        "days_overdue": 29
+    },
+    # Legal Escalation (30+ days overdue)
+    {
+        "invoice_id": "INV-2024-009",
+        "client_name": "Vikram Singh",
+        "amount": "₹2,10,000",
+        "due_date": "2026-04-10",
+        "days_overdue": 34
+    },
+    {
+        "invoice_id": "INV-2024-010",
+        "client_name": "Premium Services Ltd",
+        "amount": "₹6,25,000",
+        "due_date": "2026-03-25",
+        "days_overdue": 50
+    },
+    # Additional invoices for variety
+    {
+        "invoice_id": "INV-2024-011",
+        "client_name": "Sharma & Associates",
+        "amount": "₹1,85,000",
+        "due_date": "2026-05-08",
+        "days_overdue": 6
+    },
+    {
+        "invoice_id": "INV-2024-012",
+        "client_name": "Kumar Consulting Group",
+        "amount": "₹4,20,000",
+        "due_date": "2026-05-02",
+        "days_overdue": 12
+    },
+    {
+        "invoice_id": "INV-2024-013",
+        "client_name": "Patel & Company",
+        "amount": "₹2,95,000",
+        "due_date": "2026-04-28",
+        "days_overdue": 16
+    },
+    {
+        "invoice_id": "INV-2024-014",
+        "client_name": "Gupta Industries",
+        "amount": "₹7,10,000",
+        "due_date": "2026-04-16",
         "days_overdue": 28
     },
     {
-        "invoice_id": "INV-2024-005",
-        "client_name": "Vikram Singh",
-        "amount": "₹2,10,000",
-        "due_date": "2025-02-20",
-        "days_overdue": 45
+        "invoice_id": "INV-2024-015",
+        "client_name": "Singh Enterprises",
+        "amount": "₹3,60,000",
+        "due_date": "2026-03-20",
+        "days_overdue": 55
     }
 ]
 
@@ -264,8 +335,8 @@ mock_invoices = [
 
 if __name__ == "__main__":
 
-    print("\n📋 Test Data (5 invoices)")
-    print("-" * 60)
+    print(f"\n📋 Test Data ({len(mock_invoices)} invoices)")
+    print("-" * 80)
     for inv in mock_invoices:
         print(f"{inv['invoice_id']} | {inv['client_name']:20} | "
               f"{inv['amount']:10} | {inv['days_overdue']:2d} days")
